@@ -164,6 +164,9 @@ final class Module_Registry {
 			'cloudflare'            => Modules\Security\Cloudflare::class,
 			'mixed_content_fixer'   => Modules\Security\Mixed_Content_Fixer::class,
 			'ssl_monitor'           => Modules\Security\SSL_Monitor::class,
+			'two_factor_auth'       => Modules\Security\Two_Factor_Auth::class,
+			'file_integrity_monitor' => Modules\Security\File_Integrity_Monitor::class,
+			'vulnerability_scanner' => Modules\Security\Vulnerability_Scanner::class,
 
 			// --- Performance ------------------------------------------------
 			'lazy_loading'          => Modules\Performance\Lazy_Loading::class,
@@ -175,6 +178,7 @@ final class Module_Registry {
 			'disable_embeds'        => Modules\Performance\Disable_Embeds::class,
 			'resource_hints'        => Modules\Performance\Resource_Hints::class,
 			'page_cache'            => Modules\Performance\Page_Cache::class,
+			'critical_css'          => Modules\Performance\Critical_CSS::class,
 			'disable_self_pingbacks' => Modules\Performance\Disable_Self_Pingbacks::class,
 			'optimize_comment_reply' => Modules\Performance\Optimize_Comment_Reply::class,
 			'clean_head'            => Modules\Performance\Clean_Head::class,
@@ -224,6 +228,9 @@ final class Module_Registry {
 			'submissions_tracker'   => Modules\Forms\Submissions_Tracker::class,
 
 			// --- WooCommerce -----------------------------------------------
+			'direct_checkout'          => Modules\WooCommerce\Direct_Checkout::class,
+			'abandoned_cart'           => Modules\WooCommerce\Abandoned_Cart::class,
+			'pdf_invoices'             => Modules\WooCommerce\PDF_Invoices::class,
 			'wc_product_labels'        => Modules\WooCommerce\Product_Labels::class,
 			'wc_custom_order_statuses' => Modules\WooCommerce\Custom_Order_Statuses::class,
 			'wc_min_max_order'         => Modules\WooCommerce\Min_Max_Order::class,
@@ -248,6 +255,7 @@ final class Module_Registry {
 			'wc_disable_reviews'       => Modules\WooCommerce\Disable_Reviews::class,
 
 			// --- Content & Marketing ---------------------------------------
+			'ai_content_assistant'  => Modules\Content\AI_Content_Assistant::class,
 			'scroll_to_top'         => Modules\Content\Scroll_To_Top::class,
 			'disable_comments'      => Modules\Content\Disable_Comments::class,
 			'post_cloner'           => Modules\Content\Post_Cloner::class,
@@ -342,6 +350,7 @@ final class Module_Registry {
 			'file_manager'          => Modules\Admin\File_Manager::class,
 			'htaccess_editor'       => Modules\Admin\Htaccess_Editor::class,
 			'db_search_replace'     => Modules\Admin\DB_Search_Replace::class,
+			'db_prefix_changer'     => Modules\Admin\DB_Prefix_Changer::class,
 			'white_label'           => Modules\Admin\White_Label::class,
 			'google_reviews'        => Modules\Content\Google_Reviews::class,
 			'elementor_widgets'     => Modules\Content\Elementor_Widgets::class,
