@@ -69,7 +69,7 @@ final class Abandoned_Cart extends Abstract_Module {
 	public function performance_profile() {
 		return array(
 			'php_memory_kb' => 30,
-			'front_js_kb'   => 0.4,
+			'front_js_kb'   => 0,
 			'front_css_kb'  => 0,
 			'db_queries'    => 1,
 			'external_http' => 0,
@@ -104,9 +104,9 @@ final class Abandoned_Cart extends Abstract_Module {
 	 */
 	public function init() {
 		$this->maybe_create_table();
-		add_action( 'wp_enqueue_scripts', array( $this, 'capture_script' ) );
-		add_action( 'wp_ajax_dicestack_ac_capture', array( $this, 'capture' ) );
-		add_action( 'wp_ajax_nopriv_dicestack_ac_capture', array( $this, 'capture' ) );
+		// Capture inside WooCommerce's own checkout flow — no public endpoint that
+		// trusts an arbitrary POSTed email.
+		add_action( 'woocommerce_checkout_update_order_review', array( $this, 'capture' ), 20 );
 		add_action( self::CRON, array( $this, 'send_reminders' ) );
 		if ( ! wp_next_scheduled( self::CRON ) ) {
 			wp_schedule_event( time() + ( 5 * MINUTE_IN_SECONDS ), 'hourly', self::CRON );
@@ -146,38 +146,37 @@ final class Abandoned_Cart extends Abstract_Module {
 	}
 
 	/**
-	 * Enqueue the tiny email-capture script on the checkout page.
+	 * Store the shopper's email + current cart, called from WooCommerce's own
+	 * checkout-review flow. The email is bound to the session (the logged-in
+	 * account, or the address typed into this checkout) — never an arbitrary
+	 * value posted to an open endpoint — and rate-limited per session.
 	 *
+	 * @param string $posted_data Serialized checkout form data from WooCommerce.
 	 * @return void
 	 */
-	public function capture_script() {
-		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+	public function capture( $posted_data = '' ) {
+		if ( ! function_exists( 'WC' ) || ! WC()->cart || WC()->cart->is_empty() ) {
 			return;
 		}
-		$data = wp_json_encode(
-			array(
-				'ajax'  => admin_url( 'admin-ajax.php' ),
-				'nonce' => wp_create_nonce( 'dicestack_ac' ),
-			)
-		);
-		wp_register_script( 'dicestack-ac', false, array(), DICESTACK_VERSION, true );
-		wp_enqueue_script( 'dicestack-ac' );
-		wp_add_inline_script( 'dicestack-ac', 'document.addEventListener("change",function(e){if(e.target&&e.target.id==="billing_email"&&e.target.value.indexOf("@")>0){var c=' . $data . ';var b=new URLSearchParams();b.append("action","dicestack_ac_capture");b.append("nonce",c.nonce);b.append("email",e.target.value);fetch(c.ajax,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:b.toString()});}});' );
-	}
 
-	/**
-	 * AJAX: store the shopper's email + current cart.
-	 *
-	 * @return void
-	 */
-	public function capture() {
-		if ( ! check_ajax_referer( 'dicestack_ac', 'nonce', false ) ) {
-			wp_send_json_error();
+		if ( is_user_logged_in() ) {
+			$email = wp_get_current_user()->user_email;
+		} else {
+			$data = array();
+			parse_str( (string) $posted_data, $data );
+			$email = isset( $data['billing_email'] ) ? sanitize_email( wp_unslash( $data['billing_email'] ) ) : '';
 		}
-		$email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-		if ( ! is_email( $email ) || ! function_exists( 'WC' ) || ! WC()->cart || WC()->cart->is_empty() ) {
-			wp_send_json_error();
+		if ( ! is_email( $email ) ) {
+			return;
 		}
+
+		// Rate-limit per session so this can't be abused as an email relay.
+		$sid = WC()->session ? (string) WC()->session->get_customer_id() : '';
+		$rl  = 'dicestack_ac_' . md5( $sid . '|' . $email );
+		if ( get_transient( $rl ) ) {
+			return;
+		}
+		set_transient( $rl, 1, 15 * MINUTE_IN_SECONDS );
 
 		$items = array();
 		foreach ( WC()->cart->get_cart() as $item ) {
@@ -199,7 +198,6 @@ final class Abandoned_Cart extends Abstract_Module {
 				'created' => time(),
 			)
 		);
-		wp_send_json_success();
 	}
 
 	/**

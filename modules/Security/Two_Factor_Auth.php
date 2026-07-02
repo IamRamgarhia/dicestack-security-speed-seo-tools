@@ -130,22 +130,29 @@ final class Two_Factor_Auth extends Abstract_Module {
 	 * @return void
 	 */
 	public function profile_fields( $user ) {
-		$enabled = (bool) get_user_meta( $user->ID, self::ENABLED_KEY, true );
-		$secret  = (string) get_user_meta( $user->ID, self::SECRET_KEY, true );
-		if ( '' === $secret ) {
-			$secret = $this->generate_secret();
-		}
-		$issuer = rawurlencode( get_bloginfo( 'name' ) );
-		$label  = rawurlencode( $user->user_login );
-		$uri    = 'otpauth://totp/' . $issuer . ':' . $label . '?secret=' . $secret . '&issuer=' . $issuer;
+		$secret    = (string) get_user_meta( $user->ID, self::SECRET_KEY, true );
+		$enrolling = ( '' === $secret );
 
 		wp_nonce_field( 'dicestack_2fa_profile', 'dicestack_2fa_nonce' );
 		echo '<h2>' . esc_html__( 'Two-factor authentication', 'dicestack' ) . '</h2>';
-		echo '<table class="form-table"><tr><th>' . esc_html__( 'Enable 2FA', 'dicestack' ) . '</th><td>';
-		echo '<label><input type="checkbox" name="dicestack_2fa_enable" value="1" ' . checked( $enabled, true, false ) . ' /> ' . esc_html__( 'Require an authentication code at login', 'dicestack' ) . '</label>';
-		echo '<input type="hidden" name="dicestack_2fa_secret" value="' . esc_attr( $secret ) . '" />';
-		echo '<p class="description">' . esc_html__( 'In your authenticator app add a new account and enter this key:', 'dicestack' ) . ' <code>' . esc_html( $secret ) . '</code></p>';
-		echo '<p class="description"><a href="' . esc_url( $uri ) . '">' . esc_html__( 'Or open this otpauth link on your phone.', 'dicestack' ) . '</a></p>';
+		echo '<table class="form-table"><tr><th>' . esc_html__( 'Authenticator app', 'dicestack' ) . '</th><td>';
+
+		if ( $enrolling ) {
+			// First-time setup: generate a fresh secret and show it exactly ONCE.
+			$secret = $this->generate_secret();
+			$issuer = rawurlencode( get_bloginfo( 'name' ) );
+			$label  = rawurlencode( $user->user_login );
+			$uri    = 'otpauth://totp/' . $issuer . ':' . $label . '?secret=' . $secret . '&issuer=' . $issuer;
+
+			echo '<label><input type="checkbox" name="dicestack_2fa_enable" value="1" /> ' . esc_html__( 'Turn on and require a code at login', 'dicestack' ) . '</label>';
+			echo '<input type="hidden" name="dicestack_2fa_secret" value="' . esc_attr( $secret ) . '" />';
+			echo '<p class="description">' . esc_html__( 'In your authenticator app add a new account and enter this key:', 'dicestack' ) . ' <code>' . esc_html( $secret ) . '</code></p>';
+			echo '<p class="description"><a href="' . esc_url( $uri ) . '">' . esc_html__( 'Or open this otpauth link on your phone.', 'dicestack' ) . '</a></p>';
+		} else {
+			// Already enrolled: never render the stored secret again.
+			echo '<label><input type="checkbox" name="dicestack_2fa_enable" value="1" checked /> ' . esc_html__( 'Two-factor authentication is on for this account.', 'dicestack' ) . '</label>';
+			echo '<p class="description">' . esc_html__( 'Uncheck and save to turn it off and reset, then set it up again with a new key.', 'dicestack' ) . '</p>';
+		}
 		echo '</td></tr></table>';
 	}
 
@@ -163,11 +170,29 @@ final class Two_Factor_Auth extends Abstract_Module {
 		if ( ! wp_verify_nonce( $nonce, 'dicestack_2fa_profile' ) ) {
 			return;
 		}
-		$secret = isset( $_POST['dicestack_2fa_secret'] ) ? preg_replace( '/[^A-Z2-7]/', '', sanitize_text_field( wp_unslash( $_POST['dicestack_2fa_secret'] ) ) ) : '';
-		if ( '' !== $secret ) {
-			update_user_meta( $user_id, self::SECRET_KEY, $secret );
+		$enable   = ! empty( $_POST['dicestack_2fa_enable'] );
+		$existing = (string) get_user_meta( $user_id, self::SECRET_KEY, true );
+
+		if ( '' === $existing ) {
+			// Enrolling: accept the freshly generated secret only when turning it on.
+			if ( $enable ) {
+				$secret = isset( $_POST['dicestack_2fa_secret'] ) ? preg_replace( '/[^A-Z2-7]/', '', strtoupper( sanitize_text_field( wp_unslash( $_POST['dicestack_2fa_secret'] ) ) ) ) : '';
+				if ( strlen( $secret ) >= 16 ) {
+					update_user_meta( $user_id, self::SECRET_KEY, $secret );
+					update_user_meta( $user_id, self::ENABLED_KEY, 1 );
+				}
+			}
+			return;
 		}
-		update_user_meta( $user_id, self::ENABLED_KEY, empty( $_POST['dicestack_2fa_enable'] ) ? 0 : 1 );
+
+		// Already enrolled: never overwrite the stored secret from POST.
+		if ( $enable ) {
+			update_user_meta( $user_id, self::ENABLED_KEY, 1 );
+		} else {
+			// Turn off and reset so the next enrolment issues a fresh secret.
+			delete_user_meta( $user_id, self::SECRET_KEY );
+			update_user_meta( $user_id, self::ENABLED_KEY, 0 );
+		}
 	}
 
 	/**
