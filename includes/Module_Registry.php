@@ -162,6 +162,8 @@ final class Module_Registry {
 			'hide_php_errors'       => Modules\Security\Hide_PHP_Errors::class,
 			'login_captcha'         => Modules\Security\Login_Captcha::class,
 			'cloudflare'            => Modules\Security\Cloudflare::class,
+			'mixed_content_fixer'   => Modules\Security\Mixed_Content_Fixer::class,
+			'ssl_monitor'           => Modules\Security\SSL_Monitor::class,
 
 			// --- Performance ------------------------------------------------
 			'lazy_loading'          => Modules\Performance\Lazy_Loading::class,

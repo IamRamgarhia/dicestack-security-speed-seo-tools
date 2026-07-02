@@ -1,12 +1,12 @@
-# DiceStack — Free All-in-One WordPress Plugin (185 Tools)
+# DiceStack — Free All-in-One WordPress Plugin (187 Tools)
 
-> **One plugin. Every tool. Always free.** DiceStack bundles **185 modular tools** for security, performance, SEO, WooCommerce, caching, backups, forms, and site management into a single lightweight dashboard — and you turn on **only what you need**. Disabled tools load **zero code**, so your site stays fast.
+> **One plugin. Every tool. Always free.** DiceStack bundles **187 modular tools** for security, performance, SEO, WooCommerce, caching, backups, forms, and site management into a single lightweight dashboard — and you turn on **only what you need**. Disabled tools load **zero code**, so your site stays fast.
 
 ![Version](https://img.shields.io/badge/version-1.5.3-2563EB)
 ![License](https://img.shields.io/badge/license-GPLv2%2B-0bb8d9)
 ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b)
 ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4)
-![Tools](https://img.shields.io/badge/tools-185-16a34a)
+![Tools](https://img.shields.io/badge/tools-187-16a34a)
 ![Price](https://img.shields.io/badge/price-100%25%20free-success)
 
 **Built by [Dice Codes](https://dicecodes.com) — your digital dream team.**
@@ -14,7 +14,7 @@
 🔗 **[Download on WordPress.org](https://wordpress.org/plugins/dicestack/)** &nbsp;•&nbsp; 🌐 **[Plugin Home](https://dicecodes.com/dicestack-wordpress-plugin/)** &nbsp;•&nbsp; 📖 **[Documentation](https://dicecodes.com/dicestack/docs/)**
 
 <p align="center">
-  <img src=".wordpress-org/github-social.png" alt="DiceStack — the free all-in-one WordPress plugin with 185 modular tools for security, performance, SEO, WooCommerce, caching and backups" width="100%">
+  <img src=".wordpress-org/github-social.png" alt="DiceStack — the free all-in-one WordPress plugin with 187 modular tools for security, performance, SEO, WooCommerce, caching and backups" width="100%">
 </p>
 
 ---
@@ -23,7 +23,7 @@
 
 Most WordPress sites run a dozen plugins — one for caching, one for security, one for SEO, another for backups — each adding weight, cost, and conflicts. **DiceStack replaces that whole stack** with one free, modular toolkit:
 
-- **🧩 185 tools, one install** — security, performance, SEO, WooCommerce, media, marketing, admin, accessibility and more.
+- **🧩 187 tools, one install** — security, performance, SEO, WooCommerce, media, marketing, admin, accessibility and more.
 - **⚡ Zero bloat by design** — every tool is off until you enable it, and disabled tools load **no PHP, JS, or CSS**. The dashboard shows the exact RAM / JS / DB cost of each tool *before* you turn it on.
 - **💯 100% free, forever** — no "Pro" upsell, no locked features, no nag screens.
 - **🛡️ Safe Mode & isolation** — a failing tool auto-disables itself instead of taking down your site.
@@ -32,11 +32,11 @@ Most WordPress sites run a dozen plugins — one for caching, one for security, 
 
 ---
 
-## Features — 185 tools across 10 categories
+## Features — 187 tools across 10 categories
 
 | Category | Tools | Examples |
 |---|---|---|
-| 🛡️ **Security** | 21 | Login URL change, 2FA, firewall rules, XML-RPC control, Cloudflare control, file-change monitor |
+| 🛡️ **Security** | 23 | Login protection, change login URL, XML-RPC control, security headers, Cloudflare control, mixed content fixer, SSL certificate monitor, activity log |
 | ⚡ **Performance** | 24 | Page cache, object cache (Redis/Memcached drop-in), CSS/JS minify, lazy-load, heartbeat control, GZIP |
 | 🔍 **SEO** | 20 | Meta titles & descriptions, schema markup, XML sitemap, robots.txt editor, Open Graph, redirects |
 | 📝 **Forms** | 8 | Contact forms, spam protection, submission logging |
@@ -59,6 +59,7 @@ Looking for a **free alternative** to a paid plugin? DiceStack covers what many 
 |---|---|
 | **WP Rocket / W3 Total Cache** (caching) | Page Cache, Object Cache (Redis/Memcached), Minify CSS & JS, Lazy Load, Defer JS |
 | **Wordfence / Sucuri** (security) | Login Protection, Change Login URL, Security Hardening, Security Headers, Activity Log, Bad-Bot Blocking, Login Captcha |
+| **Really Simple SSL** (HTTPS) | Force HTTPS, Mixed Content Fixer, HSTS & Security Headers, SSL certificate monitor |
 | **Yoast SEO Premium / All in One SEO** (SEO) | Meta Tags, Schema / JSON-LD, Breadcrumbs, Canonical Tags, Redirect Manager, robots.txt editor, Analytics (GA4) |
 | **Jetpack** (all-in-one) | Performance, security and site-management tools — without the bloat or subscription |
 | **UpdraftPlus / BlogVault** (backups) | Backup & Restore, Cloud Backup (FTP / WebDAV / Email / Google Drive) |
@@ -73,7 +74,7 @@ Every one of these is **100% free** in DiceStack — no premium tier, no upsell.
 
 | | |
 |---|---|
-| ![DiceStack dashboard showing all 185 tools, each with its RAM, JS and DB cost](.wordpress-org/screenshot-1.png) | ![WooCommerce tools showing a clear "WooCommerce is not installed" message with an install link](.wordpress-org/screenshot-2.png) |
+| ![DiceStack dashboard showing all 187 tools, each with its RAM, JS and DB cost](.wordpress-org/screenshot-1.png) | ![WooCommerce tools showing a clear "WooCommerce is not installed" message with an install link](.wordpress-org/screenshot-2.png) |
 | **The DiceStack dashboard** — every tool shows its exact RAM / JS / DB footprint *before* you enable it. | **Smart dependencies** — WooCommerce tools stay dormant and clearly say "WooCommerce is not installed", with a one-click install link. No dead ends. |
 | ![The SEO category with Essential and Recommended tags and external-service consent notes](.wordpress-org/screenshot-3.png) | ![The Admin and Developer category — file manager, htaccess editor, database search-replace and more](.wordpress-org/screenshot-4.png) |
 | **Clear, honest tools** — Essential / Recommended tags, "replaces premium plugin" notes, and an upfront consent prompt for any tool that uses an external service. | **Power tools built in** — file manager, .htaccess editor, database search-replace, admin menu editor and more. |
@@ -116,7 +117,7 @@ DiceStack uses a **modular architecture**: each tool is a self-contained module 
 ## FAQ
 
 **Is there a free all-in-one WordPress plugin?**
-Yes — DiceStack is a completely free all-in-one WordPress plugin. One install gives you 185 modular tools for security, performance, SEO, WooCommerce, caching, backups and more, with no premium tier and no upsell.
+Yes — DiceStack is a completely free all-in-one WordPress plugin. One install gives you 187 modular tools for security, performance, SEO, WooCommerce, caching, backups and more, with no premium tier and no upsell.
 
 **What's a good free alternative to paid WordPress suites?**
 DiceStack replaces a whole stack of separate (and often paid) plugins — caching, security, SEO, backups, forms and an object cache — with one lightweight dashboard. You enable only the tools you need, and disabled tools load zero code, so your site stays fast.
@@ -125,7 +126,7 @@ DiceStack replaces a whole stack of separate (and often paid) plugins — cachin
 Yes. DiceStack includes free, built-in tools that cover caching (like WP Rocket or W3 Total Cache), security (like Wordfence or Sucuri), SEO (like Yoast or All in One SEO), backups (like UpdraftPlus), image optimization (like Smush) and forms (like WPForms) — so one free install can replace several paid plugins. See the comparison table above.
 
 **Is DiceStack really free?**
-Yes — every one of the 185 tools is free. There is no premium tier or paid add-on.
+Yes — every one of the 187 tools is free. There is no premium tier or paid add-on.
 
 **Will it slow my site down?**
 No. Tools you don't enable load nothing at all. Enabling the caching and optimization tools typically makes sites **faster**.
