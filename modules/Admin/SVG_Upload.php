@@ -166,43 +166,122 @@ final class SVG_Upload extends Abstract_Module {
 	 * @return string|null Sanitised SVG, or null if it can't be parsed.
 	 */
 	private function sanitize_svg( $svg ) {
-		if ( '' === trim( $svg ) ) {
+		if ( '' === trim( $svg ) || ! class_exists( '\DOMDocument' ) ) {
 			return null;
 		}
 
-		// Remove anything before the first <svg and after the last </svg>.
+		// Trim to the <svg> root.
 		$start = stripos( $svg, '<svg' );
-		$end   = strripos( $svg, '</svg>' );
-		if ( false === $start || false === $end ) {
+		if ( false === $start ) {
 			return null;
 		}
-		$svg = substr( $svg, $start, ( $end - $start ) + 6 );
-
-		// Remove DOCTYPE / ENTITY (XXE) and processing instructions / CDATA.
-		$svg = preg_replace( '/<!DOCTYPE[^>]*>/is', '', $svg );
-		$svg = preg_replace( '/<!ENTITY[^>]*>/is', '', $svg );
-		$svg = preg_replace( '/<\?[^>]*\?>/s', '', $svg );
-		$svg = preg_replace( '/<!\[CDATA\[.*?\]\]>/is', '', $svg );
-
-		// Drop dangerous elements entirely (open+close and self-closing).
-		$dangerous = array( 'script', 'foreignObject', 'iframe', 'embed', 'object', 'audio', 'video', 'animate', 'set', 'handler', 'listener' );
-		foreach ( $dangerous as $tag ) {
-			$svg = preg_replace( '#<' . $tag . '\b[^>]*>.*?</' . $tag . '>#is', '', $svg );
-			$svg = preg_replace( '#<' . $tag . '\b[^>]*/?>#is', '', $svg );
+		$svg = substr( $svg, $start );
+		$end = strripos( $svg, '</svg>' );
+		if ( false !== $end ) {
+			$svg = substr( $svg, 0, $end + 6 );
 		}
 
-		// Drop ALL inline event handlers, quoted or unquoted (onload, onbegin, …).
-		$svg = preg_replace( '/\son\w+\s*=\s*"[^"]*"/i', '', $svg );
-		$svg = preg_replace( "/\son\w+\s*=\s*'[^']*'/i", '', $svg );
-		$svg = preg_replace( '/\son\w+\s*=\s*[^\s>]+/i', '', $svg );
+		// Refuse (do not try to strip) anything carrying a DOCTYPE, ENTITY, or
+		// processing instruction — these are XXE / entity-expansion vectors.
+		if ( preg_match( '/<!DOCTYPE|<!ENTITY|<\?/i', $svg ) ) {
+			return null;
+		}
 
-		// Neutralise javascript:/data: URLs in any href/src/attribute, quoted or not.
-		$svg = preg_replace( '/(href|xlink:href|src|from|to|values|begin)\s*=\s*("|\')\s*(javascript|data)\s*:[^"\']*("|\')/i', '$1="#"', $svg );
-		$svg = preg_replace( '/(href|xlink:href|src)\s*=\s*(javascript|data)\s*:[^\s>]+/i', '$1="#"', $svg );
+		// Parse with a real DOM parser — regex cannot safely parse XML.
+		$prev = libxml_use_internal_errors( true );
+		$dom  = new \DOMDocument();
+		// LIBXML_NONET blocks network access; entities are NOT substituted (no LIBXML_NOENT).
+		$ok = $dom->loadXML( $svg, LIBXML_NONET );
+		libxml_clear_errors();
+		libxml_use_internal_errors( $prev );
 
-		// Strip style attributes/elements that could carry url(javascript:…).
-		$svg = preg_replace( '/\sstyle\s*=\s*"[^"]*expression[^"]*"/i', '', $svg );
+		if ( ! $ok || ! $dom->documentElement || 'svg' !== strtolower( (string) $dom->documentElement->localName ) ) {
+			return null;
+		}
 
-		return $svg;
+		$this->scrub_node( $dom->documentElement );
+
+		$out = $dom->saveXML( $dom->documentElement );
+		return ( is_string( $out ) && '' !== $out ) ? $out : null;
+	}
+
+	/**
+	 * Recursively remove disallowed elements/attributes from an SVG DOM node.
+	 *
+	 * @param \DOMNode $node Node to scrub.
+	 * @return void
+	 */
+	private function scrub_node( $node ) {
+		static $allowed = array(
+			'svg', 'g', 'defs', 'symbol', 'use', 'switch', 'title', 'desc', 'metadata',
+			'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon',
+			'text', 'tspan', 'textpath', 'tref',
+			'clippath', 'mask', 'pattern', 'image',
+			'lineargradient', 'radialgradient', 'stop',
+			'marker', 'view', 'a', 'style',
+			'filter', 'fegaussianblur', 'feoffset', 'feblend', 'fecolormatrix', 'fecomposite',
+			'femerge', 'femergenode', 'feflood', 'femorphology', 'fetile', 'feturbulence',
+			'fedisplacementmap', 'fecomponenttransfer', 'fefunca', 'fefuncr', 'fefuncg', 'fefuncb',
+		);
+
+		if ( ! $node->hasChildNodes() ) {
+			return;
+		}
+		// Iterate in reverse so removals don't skip siblings.
+		for ( $i = $node->childNodes->length - 1; $i >= 0; $i-- ) {
+			$child = $node->childNodes->item( $i );
+			if ( $child instanceof \DOMElement ) {
+				$tag = strtolower( (string) $child->localName );
+				if ( ! in_array( $tag, $allowed, true ) ) {
+					$node->removeChild( $child );
+					continue;
+				}
+				// A <style> block can smuggle expression()/@import/url(javascript:).
+				if ( 'style' === $tag && preg_match( '/@import|expression\s*\(|javascript:|behavior\s*:|url\(\s*["\']?\s*(javascript|data:text|https?:)/i', (string) $child->textContent ) ) {
+					$node->removeChild( $child );
+					continue;
+				}
+				$this->scrub_attributes( $child );
+				$this->scrub_node( $child );
+			} elseif ( $child instanceof \DOMComment || $child instanceof \DOMProcessingInstruction ) {
+				$node->removeChild( $child );
+			}
+		}
+	}
+
+	/**
+	 * Remove event-handler and unsafe-URL attributes from an SVG element.
+	 *
+	 * @param \DOMElement $el Element.
+	 * @return void
+	 */
+	private function scrub_attributes( $el ) {
+		if ( ! $el->hasAttributes() ) {
+			return;
+		}
+		$remove = array();
+		foreach ( iterator_to_array( $el->attributes ) as $attr ) {
+			$name  = strtolower( (string) $attr->nodeName );
+			$value = preg_replace( '/\s+/', '', strtolower( (string) $attr->nodeValue ) );
+
+			// Any inline event handler (onload, onbegin, onclick, …).
+			if ( 0 === strpos( $name, 'on' ) ) {
+				$remove[] = $attr->nodeName;
+				continue;
+			}
+			// javascript: or non-image data: URIs in any reference attribute.
+			if ( in_array( $name, array( 'href', 'xlink:href', 'src', 'from', 'to', 'by', 'values', 'begin', 'end' ), true )
+				&& ( 0 === strpos( $value, 'javascript:' ) || ( 0 === strpos( $value, 'data:' ) && 0 !== strpos( $value, 'data:image/' ) ) ) ) {
+				$remove[] = $attr->nodeName;
+				continue;
+			}
+			// style attributes carrying expression()/javascript:/dangerous url().
+			if ( 'style' === $name && preg_match( '/expression\s*\(|javascript:|behavior\s*:|url\(\s*["\']?\s*(javascript|data:text)/i', (string) $attr->nodeValue ) ) {
+				$remove[] = $attr->nodeName;
+			}
+		}
+		foreach ( $remove as $attr_name ) {
+			$el->removeAttribute( $attr_name );
+		}
 	}
 }

@@ -145,42 +145,58 @@ final class DB_Search_Replace extends Abstract_Module {
 		global $wpdb;
 		$count = 0;
 
-		// Posts.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$posts = $wpdb->get_results( $wpdb->prepare( "SELECT ID, post_content, post_title, post_excerpt FROM {$wpdb->posts} WHERE post_content LIKE %s OR post_title LIKE %s OR post_excerpt LIKE %s", '%' . $wpdb->esc_like( $search ) . '%', '%' . $wpdb->esc_like( $search ) . '%', '%' . $wpdb->esc_like( $search ) . '%' ) );
-		foreach ( (array) $posts as $p ) {
-			$new_content = $this->deep_replace( $p->post_content, $search, $replace, $count );
-			$new_title   = $this->deep_replace( $p->post_title, $search, $replace, $count );
-			$new_excerpt = $this->deep_replace( $p->post_excerpt, $search, $replace, $count );
-			if ( ! $dry ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->update( $wpdb->posts, array( 'post_content' => $new_content, 'post_title' => $new_title, 'post_excerpt' => $new_excerpt ), array( 'ID' => $p->ID ) );
-			}
-		}
+		$like  = '%' . $wpdb->esc_like( $search ) . '%';
+		$batch = 200;
 
-		// Post meta (serialized-safe).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- one-off admin-triggered search/replace.
-		$meta = $wpdb->get_results( $wpdb->prepare( "SELECT meta_id, meta_value FROM {$wpdb->postmeta} WHERE meta_value LIKE %s", '%' . $wpdb->esc_like( $search ) . '%' ) );
-		foreach ( (array) $meta as $m ) {
-			$value = maybe_unserialize( $m->meta_value );
-			$value = $this->deep_replace( $value, $search, $replace, $count );
-			if ( ! $dry ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- one-off admin-triggered search/replace.
-				$wpdb->update( $wpdb->postmeta, array( 'meta_value' => maybe_serialize( $value ) ), array( 'meta_id' => $m->meta_id ) );
+		// Posts — keyset-paginated (WHERE id > last) so large sites don't exhaust
+		// memory: only $batch rows are held at a time, and we always move forward.
+		$last = 0;
+		do {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$posts = $wpdb->get_results( $wpdb->prepare( "SELECT ID, post_content, post_title, post_excerpt FROM {$wpdb->posts} WHERE ( post_content LIKE %s OR post_title LIKE %s OR post_excerpt LIKE %s ) AND ID > %d ORDER BY ID ASC LIMIT %d", $like, $like, $like, $last, $batch ) );
+			foreach ( (array) $posts as $p ) {
+				$last        = (int) $p->ID;
+				$new_content = $this->deep_replace( $p->post_content, $search, $replace, $count );
+				$new_title   = $this->deep_replace( $p->post_title, $search, $replace, $count );
+				$new_excerpt = $this->deep_replace( $p->post_excerpt, $search, $replace, $count );
+				if ( ! $dry ) {
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$wpdb->update( $wpdb->posts, array( 'post_content' => $new_content, 'post_title' => $new_title, 'post_excerpt' => $new_excerpt ), array( 'ID' => $p->ID ) );
+				}
 			}
-		}
+		} while ( count( (array) $posts ) === $batch );
 
-		// Options (serialized-safe).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$options = $wpdb->get_results( $wpdb->prepare( "SELECT option_id, option_value FROM {$wpdb->options} WHERE option_value LIKE %s", '%' . $wpdb->esc_like( $search ) . '%' ) );
-		foreach ( (array) $options as $o ) {
-			$value = maybe_unserialize( $o->option_value );
-			$value = $this->deep_replace( $value, $search, $replace, $count );
-			if ( ! $dry ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->update( $wpdb->options, array( 'option_value' => maybe_serialize( $value ) ), array( 'option_id' => $o->option_id ) );
+		// Post meta (serialized-safe), keyset-paginated.
+		$last = 0;
+		do {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- one-off admin-triggered search/replace.
+			$meta = $wpdb->get_results( $wpdb->prepare( "SELECT meta_id, meta_value FROM {$wpdb->postmeta} WHERE meta_value LIKE %s AND meta_id > %d ORDER BY meta_id ASC LIMIT %d", $like, $last, $batch ) );
+			foreach ( (array) $meta as $m ) {
+				$last  = (int) $m->meta_id;
+				$value = maybe_unserialize( $m->meta_value );
+				$value = $this->deep_replace( $value, $search, $replace, $count );
+				if ( ! $dry ) {
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- one-off admin-triggered search/replace.
+					$wpdb->update( $wpdb->postmeta, array( 'meta_value' => maybe_serialize( $value ) ), array( 'meta_id' => $m->meta_id ) );
+				}
 			}
-		}
+		} while ( count( (array) $meta ) === $batch );
+
+		// Options (serialized-safe), keyset-paginated.
+		$last = 0;
+		do {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$options = $wpdb->get_results( $wpdb->prepare( "SELECT option_id, option_value FROM {$wpdb->options} WHERE option_value LIKE %s AND option_id > %d ORDER BY option_id ASC LIMIT %d", $like, $last, $batch ) );
+			foreach ( (array) $options as $o ) {
+				$last  = (int) $o->option_id;
+				$value = maybe_unserialize( $o->option_value );
+				$value = $this->deep_replace( $value, $search, $replace, $count );
+				if ( ! $dry ) {
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$wpdb->update( $wpdb->options, array( 'option_value' => maybe_serialize( $value ) ), array( 'option_id' => $o->option_id ) );
+				}
+			}
+		} while ( count( (array) $options ) === $batch );
 
 		if ( ! $dry ) {
 			wp_cache_flush();

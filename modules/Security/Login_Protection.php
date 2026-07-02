@@ -100,6 +100,13 @@ final class Login_Protection extends Abstract_Module {
 				'max'     => 1440,
 				'step'    => 1,
 			),
+			array(
+				'key'     => 'trust_proxy',
+				'label'   => __( 'Site is behind a proxy / CDN (Cloudflare, etc.)', 'dicestack' ),
+				'type'    => 'toggle',
+				'default' => false,
+				'help'    => __( 'Use the real visitor IP from proxy headers instead of the connecting IP. Only enable this if your site is actually behind a trusted proxy — otherwise the header can be spoofed.', 'dicestack' ),
+			),
 		);
 	}
 
@@ -178,7 +185,28 @@ final class Login_Protection extends Abstract_Module {
 	 * @return string
 	 */
 	private function get_ip() {
-		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
-		return filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '0.0.0.0';
+		$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+
+		// Only trust proxy headers when the admin has confirmed the site is behind
+		// a trusted proxy/CDN. Otherwise these headers are attacker-spoofable and
+		// would let anyone dodge or forge a lockout (or lock out the proxy IP,
+		// which blocks every visitor).
+		if ( ! empty( $this->get_setting( 'trust_proxy', false ) ) ) {
+			foreach ( array( 'HTTP_CF_CONNECTING_IP', 'HTTP_TRUE_CLIENT_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR' ) as $header ) {
+				if ( empty( $_SERVER[ $header ] ) ) {
+					continue;
+				}
+				$raw = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
+				// X-Forwarded-For can be a list: "client, proxy1, proxy2" — take the first valid IP.
+				foreach ( explode( ',', $raw ) as $candidate ) {
+					$candidate = trim( $candidate );
+					if ( filter_var( $candidate, FILTER_VALIDATE_IP ) ) {
+						return $candidate;
+					}
+				}
+			}
+		}
+
+		return filter_var( $remote, FILTER_VALIDATE_IP ) ? $remote : '0.0.0.0';
 	}
 }
