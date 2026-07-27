@@ -111,14 +111,28 @@ final class Core {
 			\WP_CLI::add_command( 'dicestack', new CLI() );
 		}
 
-		// Recovery hatch: define( 'DICESTACK_SAFE_MODE', true ) in wp-config.php to load
-		// the dashboard but NONE of the modules, so a locked-out admin can recover.
-		if ( defined( 'DICESTACK_SAFE_MODE' ) && DICESTACK_SAFE_MODE ) {
-			do_action( 'dicestack_loaded', $this );
-			return;
-		}
+		// Load the modules on the `init` action instead of now (plugins_loaded).
+		// A module's init() may read a setting, and reading a setting evaluates
+		// that module's settings_schema(), which contains translated __() labels.
+		// Doing so before `init` triggers WordPress 6.7's "_load_textdomain_just_in_time
+		// was called too early" notice. No DiceStack module hooks anything earlier
+		// than `init`, so loading at priority 0 of `init` changes no behaviour.
+		add_action( 'init', array( $this, 'load_modules' ), 0 );
+	}
 
-		$this->load_active_modules();
+	/**
+	 * Load active modules (unless in safe mode), then announce readiness. Runs on
+	 * the `init` action so no module translates anything before `init`.
+	 *
+	 * @return void
+	 */
+	public function load_modules() {
+		// Recovery hatch: define( 'DICESTACK_SAFE_MODE', true ) in wp-config.php
+		// loads the dashboard but NONE of the modules, so a locked-out admin can
+		// recover.
+		if ( ! ( defined( 'DICESTACK_SAFE_MODE' ) && DICESTACK_SAFE_MODE ) ) {
+			$this->load_active_modules();
+		}
 
 		/**
 		 * Fires after DiceStack has loaded all active modules.

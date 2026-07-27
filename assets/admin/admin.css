@@ -24,14 +24,14 @@
 
 .dicestack-app {
 	display: flex;
-	height: calc(100vh - 32px);
-	overflow: hidden;
+	align-items: flex-start;
 	background: var(--dicestack-canvas);
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 	color: var(--dicestack-ink);
 }
 @media screen and (max-width: 782px) {
-	.dicestack-app { height: auto; overflow: visible; }
+	.dicestack-app { display: block; }
+	.dicestack-sidebar { position: static; height: auto; width: 100%; min-width: 0; }
 }
 
 /* ---------- Sidebar ---------- */
@@ -42,6 +42,9 @@
 	color: #cdd5e3;
 	display: flex;
 	flex-direction: column;
+	position: sticky;
+	top: 32px;
+	height: calc(100vh - 32px);
 	overflow-y: auto;
 }
 .dicestack-logo {
@@ -145,7 +148,7 @@
 .dicestack-brand-links .ti { font-size: 14px; color: var(--dicestack-cyan); }
 
 /* ---------- Main ---------- */
-.dicestack-main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.dicestack-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .dicestack-topbar {
 	display: flex;
 	align-items: center;
@@ -216,8 +219,6 @@
 /* ---------- Grid + cards ---------- */
 .dicestack-empty { grid-column: 1 / -1; padding: 60px 24px; text-align: center; color: var(--dicestack-muted); font-size: 15px; }
 .dicestack-grid {
-	flex: 1;
-	overflow-y: auto;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 	gap: 14px;

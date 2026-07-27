@@ -33,6 +33,8 @@ final class Admin {
 	 */
 	public function init() {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		// Runs last so it can move the Dashboard link above module/post-type pages.
+		add_action( 'admin_menu', array( $this, 'reorder_menu' ), 999 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_head', array( $this, 'frame_chrome_css' ) );
 		add_action( 'admin_post_dicestack_save_settings', array( $this, 'handle_save_settings_page' ) );
@@ -500,6 +502,50 @@ final class Admin {
 			$icon,
 			58
 		);
+
+		// Explicit link back to the main dashboard. WordPress auto-adds one, but
+		// it gets crowded out once modules register their own pages and post-type
+		// screens under this menu. Same slug as the parent = renames that item
+		// rather than adding a duplicate. reorder_menu() then moves it to the top.
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'DiceStack dashboard', 'dicestack' ),
+			__( 'Dashboard', 'dicestack' ),
+			'manage_options',
+			self::PAGE_SLUG,
+			array( $this, 'render_dashboard' )
+		);
+	}
+
+	/**
+	 * Move the "Dashboard" link to the top of the DiceStack submenu.
+	 *
+	 * Post-type screens (Form entries, Subscribers, …) and module pages get
+	 * inserted ahead of it by WordPress, so we reorder our own submenu here.
+	 * WordPress exposes no filter for submenu ordering, so the $submenu global is
+	 * the only way to do this.
+	 *
+	 * @return void
+	 */
+	public function reorder_menu() {
+		global $submenu;
+		if ( empty( $submenu[ self::PAGE_SLUG ] ) || ! is_array( $submenu[ self::PAGE_SLUG ] ) ) {
+			return;
+		}
+		$dashboard = null;
+		$others    = array();
+		foreach ( $submenu[ self::PAGE_SLUG ] as $item ) {
+			if ( null === $dashboard && isset( $item[2] ) && self::PAGE_SLUG === $item[2] ) {
+				$dashboard = $item;
+			} else {
+				$others[] = $item;
+			}
+		}
+		if ( null !== $dashboard ) {
+			array_unshift( $others, $dashboard );
+			// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- reordering this plugin's own submenu; WordPress provides no filter for submenu order.
+			$submenu[ self::PAGE_SLUG ] = $others;
+		}
 	}
 
 	/**

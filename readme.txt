@@ -4,7 +4,7 @@ Tags: security, performance, seo, woocommerce, optimization
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.5.4
+Stable tag: 1.5.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,11 @@ DiceStack is built and maintained by Dice Codes (https://dicecodes.com).
 3. The SEO category — Essential and Recommended tags, "replaces premium" notes, and a consent prompt for any tool that uses an external service.
 
 == Changelog ==
+
+= 1.5.5 =
+* Fixed a WordPress 6.7 "translation loading was triggered too early" notice: modules now load on the init action, so no translated text is requested before init.
+* The admin dashboard now uses a single page scrollbar with a sticky sidebar instead of a nested inner scroll area.
+* Added a "Dashboard" link at the top of the DiceStack menu so you can always return to the main screen, even with many tools enabled.
 
 = 1.5.4 =
 * Improved: clearer messaging when a tool needs another plugin (for example WooCommerce), with a one-click install link.
