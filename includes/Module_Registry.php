@@ -142,7 +142,10 @@ final class Module_Registry {
 		return array(
 			// --- Security ---------------------------------------------------
 			'security_hardening'    => Modules\Security\Security_Hardening::class,
+			'login_ip_allowlist'    => Modules\Security\Login_IP_Allowlist::class,
 			'login_protection'      => Modules\Security\Login_Protection::class,
+			'file_scanner'          => Modules\Security\File_Scanner::class,
+			'under_attack_mode'     => Modules\Security\Under_Attack_Mode::class,
 			'rename_login'          => Modules\Security\Rename_Login::class,
 			'disable_xmlrpc'        => Modules\Security\Disable_XMLRPC::class,
 			'email_obfuscator'      => Modules\Security\Email_Obfuscator::class,
@@ -194,6 +197,8 @@ final class Module_Registry {
 			'object_cache'          => Modules\Performance\Object_Cache::class,
 			'disable_trackbacks'    => Modules\Performance\Disable_Trackbacks::class,
 			'optimize_wc_scripts'   => Modules\Performance\Optimize_WC_Scripts::class,
+			'cdn_rewrite'           => Modules\Performance\CDN_Rewrite::class,
+			'cache_warmup'          => Modules\Performance\Cache_Warmup::class,
 
 			// --- SEO --------------------------------------------------------
 			'meta_tags'             => Modules\SEO\Meta_Tags::class,
@@ -215,6 +220,7 @@ final class Module_Registry {
 			'llms_txt'              => Modules\SEO\LLMs_Txt::class,
 			'seo_checker'           => Modules\SEO\SEO_Checker::class,
 			'four04_monitor'        => Modules\SEO\Four04_Monitor::class,
+			'broken_link_checker'   => Modules\SEO\Broken_Link_Checker::class,
 			'analytics'             => Modules\SEO\Analytics::class,
 
 			// --- Forms & Communication -------------------------------------
@@ -287,6 +293,7 @@ final class Module_Registry {
 
 			// --- Media -----------------------------------------------------
 			'image_optimizer'       => Modules\Media\Image_Optimizer::class,
+			'ai_alt_text'           => Modules\Media\AI_Alt_Text::class,
 			'media_alt_text'        => Modules\Media\Media_Alt_Text::class,
 			'image_sizes_control'   => Modules\Media\Image_Sizes_Control::class,
 			'media_categories'      => Modules\Media\Media_Categories::class,
@@ -310,6 +317,7 @@ final class Module_Registry {
 			'backup_restore'        => Modules\Site\Backup_Restore::class,
 			'cloud_backup'          => Modules\Site\Cloud_Backup::class,
 			'monthly_report'        => Modules\Site\Monthly_Report::class,
+			'email_log'             => Modules\Site\Email_Log::class,
 			'admin_custom_css'      => Modules\Admin\Admin_Custom_CSS::class,
 
 			// --- Admin & Developer -----------------------------------------
@@ -352,6 +360,7 @@ final class Module_Registry {
 			'db_search_replace'     => Modules\Admin\DB_Search_Replace::class,
 			'db_prefix_changer'     => Modules\Admin\DB_Prefix_Changer::class,
 			'white_label'           => Modules\Admin\White_Label::class,
+			'cron_manager'          => Modules\Admin\Cron_Manager::class,
 			'google_reviews'        => Modules\Content\Google_Reviews::class,
 			'elementor_widgets'     => Modules\Content\Elementor_Widgets::class,
 			'broken_image_finder'   => Modules\Media\Broken_Image_Finder::class,
@@ -570,6 +579,12 @@ final class Module_Registry {
 			'monthly_report'       => 'dicestack-report',
 			'shortcode_generator'  => 'dicestack-shortcodes',
 			'admin_menu_editor'    => 'dicestack-admin-menu',
+			'cache_warmup'         => 'dicestack-cache-warmup',
+			'email_log'            => 'dicestack-email-log',
+			'broken_link_checker'  => 'dicestack-broken-links',
+			'file_scanner'         => 'dicestack-file-scanner',
+			'ai_alt_text'          => 'dicestack-ai-alt',
+			'cron_manager'         => 'dicestack-cron',
 		);
 	}
 

@@ -4,7 +4,7 @@ Tags: security, performance, seo, woocommerce, optimization
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.5.6
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,12 @@ DiceStack is built and maintained by Dice Codes (https://dicecodes.com).
 3. The SEO category — Essential and Recommended tags, "replaces premium" notes, and a consent prompt for any tool that uses an external service.
 
 == Changelog ==
+
+= 1.6.0 =
+* NEW: GitHub self-updater — the Full Edition now checks GitHub Releases for updates (one-click update in wp-admin).
+* NEW security tools: File Scanner (malware / hacked-file finder), Under Attack mode (emergency lockdown), and Login IP allowlist.
+* NEW performance tools: CDN URL rewrite and Cache Warmup.
+* NEW utilities: Cron event manager, Email log, Broken-link checker, and AI alt-text generator.
 
 = 1.5.6 =
 * The full GitHub edition is now clearly separated from the WordPress.org edition (distinct name + Update URI header), so WordPress will never auto-update one into the other.

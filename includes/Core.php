@@ -104,6 +104,8 @@ final class Core {
 		if ( is_admin() ) {
 			( new Admin\Admin() )->init();
 			( new Site_Health() )->init();
+			// Full Edition updates come from GitHub Releases, not WordPress.org.
+			( new Updater() )->init();
 		}
 
 		// Developer command-line interface.
