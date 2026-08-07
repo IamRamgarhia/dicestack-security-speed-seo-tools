@@ -74,11 +74,15 @@ foreach ( $modules as $mid => $m ) {
 
 	<aside class="dicestack-sidebar">
 		<div class="dicestack-logo">
-			<span class="dicestack-logo-name">DiceStack</span>
+			<span class="dicestack-logo-name">DiceStack
+				<?php if ( defined( 'DICESTACK_EDITION' ) && DICESTACK_EDITION ) : ?>
+					<span style="display:inline-block;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#b8860b;color:#fff;border-radius:4px;padding:1px 6px;margin-left:4px;vertical-align:middle;"><?php echo esc_html( DICESTACK_EDITION ); ?></span>
+				<?php endif; ?>
+			</span>
 			<span class="dicestack-logo-tag">
 				<?php
-				/* translators: %d: number of modules. */
-				echo esc_html( sprintf( __( '%d modules · all free', 'dicestack' ), $total_count ) );
+				/* translators: %d: number of tools (updates automatically as tools are added). */
+				echo esc_html( sprintf( __( '%d tools · all free', 'dicestack' ), $total_count ) );
 				?>
 			</span>
 		</div>

@@ -4,11 +4,11 @@ Tags: security, performance, seo, woocommerce, optimization
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.6.3
+Stable tag: 1.6.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-One plugin, 170+ free tools: caching, security, SEO, WooCommerce, backups, object cache, image optimization and more. Turn on only what you need.
+One plugin, 200+ free tools: caching, security, SEO, WooCommerce, backups, object cache, image optimization and more. Turn on only what you need.
 
 == Description ==
 
@@ -25,7 +25,7 @@ Built and maintained by **[Dice Codes](https://dicecodes.com)**.
 * **No paywalls** — 2FA-grade login protection, schema, spam protection, caching, backups, and more, all included.
 * **Self-hosted first** — runs on your own server. Modules that contact an external service ask for consent and link to where to get any keys.
 
-= What's included (170+ modules across 10 categories) =
+= What's included (200+ modules across 10 categories) =
 
 * **Security** — login protection, **change the wp-login URL (hide login)**, login & comment captcha, security hardening, security headers, force HTTPS, activity log, 404 monitor, bad-bot blocking, Cloudflare control (Under Attack mode, cache purge), and more.
 * **Performance** — **page caching with gzip, mobile cache and preloading**, **Redis / Memcached object cache**, minify HTML, **minify CSS & JavaScript**, defer JavaScript, lazy loading, image optimization, database cleanup, hover prefetch, disable bloat, and more.
@@ -79,6 +79,9 @@ DiceStack is built and maintained by Dice Codes (https://dicecodes.com).
 3. The SEO category — Essential and Recommended tags, "replaces premium" notes, and a consent prompt for any tool that uses an external service.
 
 == Changelog ==
+
+= 1.6.4 =
+* The dashboard now shows a "Full Edition" badge and the tool count updates itself automatically as tools are added (no more hard-coded numbers).
 
 = 1.6.3 =
 * Core file integrity: the integrity monitor now has a Core integrity page (Scan now + results) and also detects unknown/injected .php files inside wp-admin and wp-includes, not just modified or missing core files.

@@ -1,12 +1,12 @@
-# DiceStack (Full Edition) — Free All-in-One WordPress Plugin (208 Tools)
+# DiceStack (Full Edition) — Free All-in-One WordPress Plugin (200+ Tools)
 
-> **One plugin. Every tool. Always free.** DiceStack bundles **208 modular tools** for security, performance, SEO, WooCommerce, caching, backups, forms, and site management into a single lightweight dashboard — and you turn on **only what you need**. Disabled tools load **zero code**, so your site stays fast.
+> **One plugin. Every tool. Always free.** DiceStack bundles **200+ modular tools** for security, performance, SEO, WooCommerce, caching, backups, forms, and site management into a single lightweight dashboard — and you turn on **only what you need**. Disabled tools load **zero code**, so your site stays fast.
 
 ![Version](https://img.shields.io/badge/version-1.6.3-2563EB)
 ![License](https://img.shields.io/badge/license-GPLv2%2B-0bb8d9)
 ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b)
 ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4)
-![Tools](https://img.shields.io/badge/tools-208-16a34a)
+![Tools](https://img.shields.io/badge/tools-200%2B-16a34a)
 ![Price](https://img.shields.io/badge/price-100%25%20free-success)
 
 **Built by [Dice Codes](https://dicecodes.com) — your digital dream team.**
@@ -14,7 +14,7 @@
 🔗 **[Download on WordPress.org](https://wordpress.org/plugins/dicestack/)** &nbsp;•&nbsp; 🌐 **[Plugin Home](https://dicecodes.com/dicestack-wordpress-plugin/)** &nbsp;•&nbsp; 📖 **[Documentation](https://dicecodes.com/dicestack/docs/)**
 
 <p align="center">
-  <img src=".wordpress-org/github-social.png" alt="DiceStack — the free all-in-one WordPress plugin with 208 modular tools for security, performance, SEO, WooCommerce, caching and backups" width="100%">
+  <img src=".wordpress-org/github-social.png" alt="DiceStack — the free all-in-one WordPress plugin with 200+ modular tools for security, performance, SEO, WooCommerce, caching and backups" width="100%">
 </p>
 
 ---
@@ -26,7 +26,7 @@ DiceStack comes in two builds. **This repository is the Full Edition.**
 | | **Full Edition** (this repo) | **WordPress.org Edition** |
 |---|---|---|
 | Where | [GitHub Releases](https://github.com/IamRamgarhia/DiceStack-free-all-in-one-WordPress-plugin/releases) | [wordpress.org/plugins/dicestack](https://wordpress.org/plugins/dicestack/) |
-| Tools | **208** | ~170 |
+| Tools | **200+** | ~170 |
 | Includes power tools | ✅ File manager, code snippets, database tools, wp-config editor, .htaccess editor, header/footer code, custom CSS | ❌ (not allowed on the .org directory) |
 | Updates | One-click **from GitHub** (built-in updater) | WordPress.org auto-updates |
 | Best for | Developers & agencies who want everything | Most sites — lean and directory-vetted |
@@ -39,7 +39,7 @@ Both are **100% free**. The two never clash: the Full Edition carries an `Update
 
 Most WordPress sites run a dozen plugins — one for caching, one for security, one for SEO, another for backups — each adding weight, cost, and conflicts. **DiceStack replaces that whole stack** with one free, modular toolkit:
 
-- **🧩 208 tools, one install** — security, performance, SEO, WooCommerce, media, marketing, admin, accessibility and more.
+- **🧩 200+ tools, one install** — security, performance, SEO, WooCommerce, media, marketing, admin, accessibility and more.
 - **⚡ Zero bloat by design** — every tool is off until you enable it, and disabled tools load **no PHP, JS, or CSS**. The dashboard shows the exact RAM / JS / DB cost of each tool *before* you turn it on.
 - **💯 100% free, forever** — no "Pro" upsell, no locked features, no nag screens.
 - **🛡️ Safe Mode & isolation** — a failing tool auto-disables itself instead of taking down your site.
@@ -48,7 +48,7 @@ Most WordPress sites run a dozen plugins — one for caching, one for security, 
 
 ---
 
-## Features — 208 tools across 10 categories
+## Features — 200+ tools across 10 categories
 
 | Category | Tools | Examples |
 |---|---|---|
@@ -87,7 +87,7 @@ Gated behind admin capabilities, with clear warnings and safe defaults:
 
 ## Installation
 
-### Full Edition (this repo — 208 tools)
+### Full Edition (this repo — 200+ tools)
 1. Download the latest **`dicestack.zip`** from the [**Releases**](https://github.com/IamRamgarhia/DiceStack-free-all-in-one-WordPress-plugin/releases) page (use the attached `dicestack.zip`, **not** the auto-generated "Source code").
 2. In wp-admin go to **Plugins → Add New → Upload Plugin** and choose the zip.
 3. **Activate**, then open the **DiceStack** dashboard.
@@ -139,7 +139,7 @@ Every one of these is **100% free** in DiceStack — no premium tier, no upsell.
 Yes — DiceStack is a completely free all-in-one WordPress plugin. One install gives you 200+ modular tools for security, performance, SEO, WooCommerce, caching, backups and more, with no premium tier and no upsell.
 
 **What's the difference between the Full Edition and the WordPress.org version?**
-The Full Edition (here on GitHub) includes ~208 tools, including developer power tools (code snippets, database tools, file manager, wp-config editor) that the WordPress.org directory doesn't allow. The WordPress.org version is a leaner, directory-vetted ~170-tool build. Both are free; pick whichever fits.
+The Full Edition (here on GitHub) includes ~200+ tools, including developer power tools (code snippets, database tools, file manager, wp-config editor) that the WordPress.org directory doesn't allow. The WordPress.org version is a leaner, directory-vetted ~170-tool build. Both are free; pick whichever fits.
 
 **How does the Full Edition update?**
 It has a built-in updater that checks this repo's GitHub Releases and offers a normal one-click update inside wp-admin. It will never be overwritten by the WordPress.org version (it carries an `Update URI` header).
