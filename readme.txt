@@ -4,7 +4,7 @@ Tags: security, performance, seo, woocommerce, optimization
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,9 @@ DiceStack is built and maintained by Dice Codes (https://dicecodes.com).
 3. The SEO category — Essential and Recommended tags, "replaces premium" notes, and a consent prompt for any tool that uses an external service.
 
 == Changelog ==
+
+= 1.6.2 =
+* File Scanner: far fewer false positives. It now flags malware-shaped patterns (obfuscated/encoded code, dangerous functions fed request input, web-shell markers, PHP hidden in fake image uploads) instead of every file that merely uses base64_decode/eval/exec — so legitimate themes and vendor libraries are no longer flagged.
 
 = 1.6.1 =
 * NEW developer power tools (Full Edition, gated behind admin capabilities with clear warnings): Code Snippets (run PHP), Database Tools (browse tables + run SQL, read-only by default), and a wp-config editor (toggles common constants, backs up the file first).

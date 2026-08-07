@@ -92,27 +92,45 @@ final class File_Scanner extends Abstract_Module {
 	}
 
 	/**
-	 * High-severity signatures: signature name => regular expression.
+	 * Critical signatures — patterns that strongly indicate a real payload or web
+	 * shell: obfuscated code, dynamic (request) input reaching a dangerous
+	 * function, or known shell markers.
+	 *
+	 * Lone dangerous-function names are DELIBERATELY not here. base64_decode(),
+	 * eval(), assert(), exec(), shell_exec(), move_uploaded_file() etc. appear all
+	 * over legitimate frameworks and vendor libraries (Nette, Monolog, update
+	 * checkers, theme engines), so flagging them on their own produces only noise.
+	 * We flag the malware-SHAPED combinations instead.
 	 *
 	 * @return array<string,string>
 	 */
-	private function high_signatures() {
+	private function critical_signatures() {
 		return array(
-			'eval()'                 => '/eval\s*\(/i',
-			'base64_decode()'        => '/base64_decode\s*\(/i',
-			'gzinflate()'            => '/gzinflate\s*\(/i',
-			'gzuncompress()'         => '/gzuncompress\s*\(/i',
-			'str_rot13()'            => '/str_rot13\s*\(/i',
-			'shell_exec()'           => '/shell_exec\s*\(/i',
-			'system()'               => '/\bsystem\s*\(/i',
-			'passthru()'             => '/passthru\s*\(/i',
-			'exec()'                 => '/\bexec\s*\(/i',
-			'preg_replace /e'        => '/preg_replace\s*\(\s*[\'"].*?\/e/i',
-			'assert()'               => '/assert\s*\(/i',
-			'create_function()'      => '/create_function\s*\(/i',
-			'superglobal call'       => '/\$_(POST|GET|REQUEST|COOKIE)\s*\[[^\]]*\]\s*\(/i',
-			'move_uploaded_file()'   => '/move_uploaded_file/i',
-			'known shell marker'     => '/FilesMan|WSO |b374k|c99shell/i',
+			// eval()/assert() of decoded, reversed, or request-sourced data — the
+			// classic backdoor, e.g. eval(base64_decode(str_rot13(strrev($_POST)))).
+			'eval of encoded/remote input' => '/\b(eval|assert)\s*\(\s*(base64_decode|gzinflate|gzuncompress|gzdecode|str_rot13|strrev|convert_uudecode|rawurldecode|\$_(POST|GET|REQUEST|COOKIE)|["\']?php:\/\/)/i',
+			// @-suppressed eval/assert of a variable — legit code almost never does this.
+			'error-suppressed eval'        => '/@\s*(eval|assert)\s*\(\s*\$/i',
+			// A decoder fed directly from request input.
+			'decode of request input'      => '/(base64_decode|gzinflate|gzuncompress|gzdecode|str_rot13|rawurldecode)\s*\(\s*\$_(POST|GET|REQUEST|COOKIE)/i',
+			// Nested decoder chains used to unpack a payload.
+			'nested decode chain'          => '/(gzinflate|gzuncompress|gzdecode|str_rot13|strrev)\s*\(\s*(base64_decode|str_rot13|strrev|gzinflate)/i',
+			// A shell command built from request input / decoded data.
+			'shell command from input'     => '/\b(system|exec|shell_exec|passthru|popen|proc_open)\s*\(\s*(\$_(POST|GET|REQUEST|COOKIE|SERVER)|base64_decode|["\']?php:\/\/)/i',
+			// Remote code fetched then executed / included.
+			'remote code include or exec'  => '/(eval|assert|include|include_once|require|require_once)\s*\(\s*(file_get_contents\s*\(\s*["\']?https?:|curl_exec|["\']https?:\/\/)/i',
+			// A value from the request used directly as a function name.
+			'superglobal used as function' => '/\$_(POST|GET|REQUEST|COOKIE)\s*\[[^\]]*\]\s*\(/i',
+			// preg_replace with the /e modifier (executes the replacement as code).
+			'preg_replace /e code'         => '/preg_replace\s*\(\s*([\'"])(?:(?!\1).)*\/[a-z]*e[a-z]*\1/i',
+			// Removed in PHP 8; in modern code it is almost always obfuscation.
+			'create_function()'            => '/\bcreate_function\s*\(/i',
+			// A large inline base64 blob handed to a decoder (packed payload).
+			'large base64 payload'         => '/base64_decode\s*\(\s*[\'"][A-Za-z0-9+\/=]{300,}[\'"]/',
+			// A long \xNN hex-escaped run used to hide function names/strings.
+			'long hex-encoded string'      => '/(\\\\x[0-9A-Fa-f]{2}){40,}/',
+			// Signatures/titles of well-known PHP web shells.
+			'known web-shell marker'       => '/\b(c99shell|r57shell|b374k|wsoshell|FilesMan|IndoXploit|MulCiShell|angel_shell|by_priv8|GIF89a\s*<\?php)\b/i',
 		);
 	}
 
@@ -172,9 +190,9 @@ final class File_Scanner extends Abstract_Module {
 		$self      = $this->self_dir();
 		$start     = time();
 
-		$root    = str_replace( '\\', '/', WP_CONTENT_DIR );
-		$high    = $this->high_signatures();
-		$uploads = wp_get_upload_dir();
+		$root     = str_replace( '\\', '/', WP_CONTENT_DIR );
+		$critical = $this->critical_signatures();
+		$uploads  = wp_get_upload_dir();
 		$up_dir  = isset( $uploads['basedir'] ) ? rtrim( str_replace( '\\', '/', $uploads['basedir'] ), '/' ) . '/' : '';
 
 		if ( ! is_dir( $root ) ) {
@@ -200,11 +218,12 @@ final class File_Scanner extends Abstract_Module {
 			);
 		}
 
+		// Non-PHP extensions we still open when they live in uploads, because
+		// malware is commonly disguised as an image or archive there.
+		$disguise_ext = array( 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'ico', 'svg', 'zip', 'txt', 'log', 'bak', 'old', 'suspected' );
+
 		foreach ( $iterator as $file ) {
 			if ( ! $file->isFile() ) {
-				continue;
-			}
-			if ( 'php' !== strtolower( $file->getExtension() ) ) {
 				continue;
 			}
 
@@ -212,6 +231,15 @@ final class File_Scanner extends Abstract_Module {
 
 			// Skip DiceStack's own files (they contain the scanner signatures).
 			if ( 0 === strpos( $path, $self ) ) {
+				continue;
+			}
+
+			$ext        = strtolower( $file->getExtension() );
+			$in_uploads = ( '' !== $up_dir && 0 === strpos( $path, $up_dir ) );
+			$is_php     = ( 'php' === $ext || 'phtml' === $ext || 'php5' === $ext || 'php7' === $ext );
+
+			// Scan every PHP file anywhere; in uploads also open disguised files.
+			if ( ! $is_php && ! ( $in_uploads && in_array( $ext, $disguise_ext, true ) ) ) {
 				continue;
 			}
 
@@ -230,16 +258,27 @@ final class File_Scanner extends Abstract_Module {
 			$matched  = array();
 			$severity = '';
 
-			foreach ( $high as $label => $pattern ) {
+			// A non-PHP file in uploads that actually contains PHP is a strong
+			// indicator of a disguised backdoor.
+			if ( ! $is_php ) {
+				if ( preg_match( '/<\?php|<\?=/', $contents ) ) {
+					$matched[] = __( 'PHP code hidden inside a non-PHP file', 'dicestack' );
+					$severity  = 'high';
+				} else {
+					continue;
+				}
+			}
+
+			foreach ( $critical as $label => $pattern ) {
 				if ( preg_match( $pattern, $contents ) ) {
 					$matched[] = $label;
 					$severity  = 'high';
 				}
 			}
 
-			// Medium: any .php file living inside the uploads directory is
-			// suspicious regardless of contents (uploads should not run PHP).
-			if ( '' !== $up_dir && 0 === strpos( $path, $up_dir ) ) {
+			// Medium: a plain .php file living inside the uploads directory is
+			// itself suspicious (uploads should not contain executable PHP).
+			if ( $is_php && $in_uploads ) {
 				if ( '' === $severity ) {
 					$severity = 'medium';
 				}
