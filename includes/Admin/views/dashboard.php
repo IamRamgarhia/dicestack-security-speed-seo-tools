@@ -166,6 +166,14 @@ foreach ( $modules as $mid => $m ) {
 				<?php endif; ?>
 			</div>
 			<div class="dicestack-brand-links">
+				<?php if ( defined( 'DICESTACK_EDITION' ) && DICESTACK_EDITION ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'update-core.php?force-check=1' ) ); ?>"><i class="ti ti-refresh" aria-hidden="true"></i>
+						<?php
+						/* translators: %s: current plugin version. */
+						echo esc_html( sprintf( __( 'Check for updates (v%s)', 'dicestack' ), defined( 'DICESTACK_VERSION' ) ? DICESTACK_VERSION : '' ) );
+						?>
+					</a>
+				<?php endif; ?>
 				<a href="https://dicecodes.com/dicestack/docs/" target="_blank" rel="noopener"><i class="ti ti-info-circle" aria-hidden="true"></i> <?php esc_html_e( 'Docs & guides', 'dicestack' ); ?></a>
 				<a href="https://dicecodes.com" target="_blank" rel="noopener"><i class="ti ti-external-link" aria-hidden="true"></i> <?php esc_html_e( 'Visit Dice Codes', 'dicestack' ); ?></a>
 				<a href="<?php echo esc_url( 'mailto:Contact@dicecodes.com?subject=' . rawurlencode( 'DiceStack support request' ) ); ?>"><i class="ti ti-mail" aria-hidden="true"></i> <?php esc_html_e( 'Get support', 'dicestack' ); ?></a>

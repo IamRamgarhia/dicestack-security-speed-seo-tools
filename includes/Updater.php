@@ -44,6 +44,21 @@ final class Updater {
 		add_filter( 'upgrader_source_selection', array( $this, 'fix_source_dir' ), 10, 4 );
 		// Refresh the cache when the user clicks "Check again".
 		add_action( 'upgrader_process_complete', array( $this, 'clear_cache' ), 10, 0 );
+		// On the Updates screen's "Check Again" (force-check), drop our cached
+		// GitHub result so the check that follows hits GitHub fresh.
+		add_action( 'load-update-core.php', array( $this, 'maybe_force_check' ) );
+	}
+
+	/**
+	 * Clear the cached release when WordPress is doing a forced update check.
+	 *
+	 * @return void
+	 */
+	public function maybe_force_check() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- core's own read-only force-check flag.
+		if ( isset( $_GET['force-check'] ) ) {
+			delete_transient( self::CACHE_KEY );
+		}
 	}
 
 	/**
@@ -68,6 +83,8 @@ final class Updater {
 			return $update;
 		}
 
+		$icon = DICESTACK_URL . 'assets/img/icon-256x256.png';
+
 		return array(
 			'slug'        => dirname( DICESTACK_BASENAME ),
 			'version'     => $release['version'],
@@ -76,6 +93,11 @@ final class Updater {
 			'tested'      => isset( $plugin_data['Tested up to'] ) ? $plugin_data['Tested up to'] : '',
 			'requires'    => isset( $plugin_data['RequiresWP'] ) ? $plugin_data['RequiresWP'] : '',
 			'requires_php' => isset( $plugin_data['RequiresPHP'] ) ? $plugin_data['RequiresPHP'] : '',
+			'icons'       => array(
+				'1x'      => $icon,
+				'2x'      => $icon,
+				'default' => $icon,
+			),
 		);
 	}
 
@@ -104,6 +126,12 @@ final class Updater {
 		$info->author       = '<a href="https://dicecodes.com">Dice Codes</a>';
 		$info->homepage     = 'https://dicecodes.com/dicestack-wordpress-plugin/';
 		$info->download_link = $release['package'];
+		$icon               = DICESTACK_URL . 'assets/img/icon-256x256.png';
+		$info->icons        = array(
+			'1x'      => $icon,
+			'2x'      => $icon,
+			'default' => $icon,
+		);
 		$info->sections     = array(
 			'description' => esc_html__( 'The full GitHub edition of DiceStack, including the power tools not available on WordPress.org.', 'dicestack' ),
 			'changelog'   => '<pre style="white-space:pre-wrap;">' . esc_html( (string) $release['body'] ) . '</pre>',
