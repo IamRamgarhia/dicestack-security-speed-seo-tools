@@ -361,6 +361,9 @@ final class Module_Registry {
 			'db_prefix_changer'     => Modules\Admin\DB_Prefix_Changer::class,
 			'white_label'           => Modules\Admin\White_Label::class,
 			'cron_manager'          => Modules\Admin\Cron_Manager::class,
+			'code_snippets'         => Modules\Admin\Code_Snippets::class,
+			'database_tools'        => Modules\Admin\Database_Tools::class,
+			'wp_config_editor'      => Modules\Admin\WP_Config_Editor::class,
 			'google_reviews'        => Modules\Content\Google_Reviews::class,
 			'elementor_widgets'     => Modules\Content\Elementor_Widgets::class,
 			'broken_image_finder'   => Modules\Media\Broken_Image_Finder::class,
@@ -585,6 +588,9 @@ final class Module_Registry {
 			'file_scanner'         => 'dicestack-file-scanner',
 			'ai_alt_text'          => 'dicestack-ai-alt',
 			'cron_manager'         => 'dicestack-cron',
+			'code_snippets'        => 'dicestack-snippets',
+			'database_tools'       => 'dicestack-db-tools',
+			'wp_config_editor'     => 'dicestack-wp-config',
 		);
 	}
 
