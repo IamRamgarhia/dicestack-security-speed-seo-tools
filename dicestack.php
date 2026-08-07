@@ -1,9 +1,10 @@
 <?php
 /**
- * Plugin Name:       DiceStack
+ * Plugin Name:       DiceStack (Full Edition)
  * Plugin URI:        https://dicecodes.com/dicestack-wordpress-plugin/
- * Description:       One plugin. Every tool. Always free. 170+ modular tools for security, performance, SEO, forms, WooCommerce, and site management — turn on only what you need. By Dice Codes.
- * Version:           1.5.5
+ * Update URI:        https://github.com/IamRamgarhia/DiceStack-free-all-in-one-WordPress-plugin
+ * Description:       One plugin. Every tool. Always free. The full GitHub edition — 190+ modular tools for security, performance, SEO, forms, WooCommerce, and site management, including the power tools not on WordPress.org. By Dice Codes.
+ * Version:           1.5.6
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Dice Codes
@@ -27,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * Constants
  * ---------------------------------------------------------------------------
  */
-define( 'DICESTACK_VERSION', '1.5.5' );
+define( 'DICESTACK_VERSION', '1.5.6' );
 define( 'DICESTACK_FILE', __FILE__ );
 define( 'DICESTACK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'DICESTACK_URL', plugin_dir_url( __FILE__ ) );

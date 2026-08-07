@@ -143,7 +143,12 @@ final class Rename_Login extends Abstract_Module {
 			return;
 		}
 
-		add_action( 'setup_theme', array( $this, 'detect' ), 1 );
+		// Detect the secret-slug request on `init` (priority 1). Modules load on
+		// `init` (priority 0), so the old `setup_theme` hook — which fires before
+		// init — would register too late to ever run. init runs before wp_loaded,
+		// so serve() still gets the flag it needs, and reading the slug setting
+		// here (at init) doesn't trip WordPress 6.7's early-translation notice.
+		add_action( 'init', array( $this, 'detect' ), 1 );
 		add_action( 'wp_loaded', array( $this, 'serve' ) );
 
 		add_filter( 'site_url', array( $this, 'filter_url' ), 10, 1 );

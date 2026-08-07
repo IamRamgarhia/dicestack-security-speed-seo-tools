@@ -4,7 +4,7 @@ Tags: security, performance, seo, woocommerce, optimization
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.5.5
+Stable tag: 1.5.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,10 @@ DiceStack is built and maintained by Dice Codes (https://dicecodes.com).
 3. The SEO category — Essential and Recommended tags, "replaces premium" notes, and a consent prompt for any tool that uses an external service.
 
 == Changelog ==
+
+= 1.5.6 =
+* The full GitHub edition is now clearly separated from the WordPress.org edition (distinct name + Update URI header), so WordPress will never auto-update one into the other.
+* Fixed a WordPress 6.7 "translation loaded too early" notice from the hidden-login tool, and restored that tool (it now initialises on the init action).
 
 = 1.5.5 =
 * Fixed a WordPress 6.7 "translation loading was triggered too early" notice: modules now load on the init action, so no translated text is requested before init.
