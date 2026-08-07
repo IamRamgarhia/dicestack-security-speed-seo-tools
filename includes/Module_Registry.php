@@ -591,6 +591,7 @@ final class Module_Registry {
 			'code_snippets'        => 'dicestack-snippets',
 			'database_tools'       => 'dicestack-db-tools',
 			'wp_config_editor'     => 'dicestack-wp-config',
+			'file_integrity_monitor' => 'dicestack-integrity',
 		);
 	}
 
