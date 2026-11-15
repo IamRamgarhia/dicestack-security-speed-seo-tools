@@ -25,7 +25,7 @@ DiceStack comes in two builds. **This repository is the Full Edition.**
 
 | | **Full Edition** (this repo) | **WordPress.org Edition** |
 |---|---|---|
-| Where | [GitHub Releases](https://github.com/IamRamgarhia/DiceStack-free-all-in-one-WordPress-plugin/releases) | [wordpress.org/plugins/dicestack](https://wordpress.org/plugins/dicestack/) |
+| Where | [GitHub Releases](https://github.com/IamRamgarhia/dicestack-security-speed-seo-tools/releases) | [wordpress.org/plugins/dicestack](https://wordpress.org/plugins/dicestack/) |
 | Tools | **200+** | ~170 |
 | Includes power tools | ✅ File manager, code snippets, database tools, wp-config editor, .htaccess editor, header/footer code, custom CSS | ❌ (not allowed on the .org directory) |
 | Updates | One-click **from GitHub** (built-in updater) | WordPress.org auto-updates |
@@ -88,7 +88,7 @@ Gated behind admin capabilities, with clear warnings and safe defaults:
 ## Installation
 
 ### Full Edition (this repo — 200+ tools)
-1. Download the latest **`dicestack.zip`** from the [**Releases**](https://github.com/IamRamgarhia/DiceStack-free-all-in-one-WordPress-plugin/releases) page (use the attached `dicestack.zip`, **not** the auto-generated "Source code").
+1. Download the latest **`dicestack.zip`** from the [**Releases**](https://github.com/IamRamgarhia/dicestack-security-speed-seo-tools/releases) page (use the attached `dicestack.zip`, **not** the auto-generated "Source code").
 2. In wp-admin go to **Plugins → Add New → Upload Plugin** and choose the zip.
 3. **Activate**, then open the **DiceStack** dashboard.
 4. Future updates appear as a normal one-click update in wp-admin (checked from GitHub Releases).
@@ -160,7 +160,7 @@ Nothing changes — enabled tools stay enabled, disabled stay disabled, and all 
 
 ## Contributing
 
-Issues and pull requests are welcome. Please open an [issue](https://github.com/IamRamgarhia/DiceStack-free-all-in-one-WordPress-plugin/issues) for bugs or feature requests.
+Issues and pull requests are welcome. Please open an [issue](https://github.com/IamRamgarhia/dicestack-security-speed-seo-tools/issues) for bugs or feature requests.
 
 ## License
 
