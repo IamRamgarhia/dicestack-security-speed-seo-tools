@@ -66,7 +66,7 @@ final class Cloud_Backup extends Abstract_Module {
 	public function external_service() {
 		return array(
 			'service' => __( 'Your chosen destination (FTP/WebDAV/email/Google Drive)', 'dicestack' ),
-			'url'     => 'https://dicecodes.com/dicestack-wordpress-plugin/',
+			'url'     => 'https://dicecodes.com/dicestack/',
 			'data'    => __( 'Your backup archive is uploaded to the destination you configure.', 'dicestack' ),
 		);
 	}
@@ -380,7 +380,7 @@ final class Cloud_Backup extends Abstract_Module {
 		$last = get_option( 'dicestack_cloud_last', array() );
 		// Round-trip a state nonce through the connector; verified on return.
 		$return = add_query_arg( 'dicestack_state', wp_create_nonce( 'dicestack_gdrive_connect' ), admin_url( 'admin.php?page=dicestack-cloud' ) );
-		$relay  = 'https://dicecodes.com/dicestack-wordpress-plugin/connect/google?return=' . rawurlencode( $return );
+		$relay  = 'https://dicecodes.com/dicestack/connect/google?return=' . rawurlencode( $return );
 
 		echo '<div class="wrap"><h1>' . esc_html__( 'Cloud backup', 'dicestack' ) . '</h1>';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag.

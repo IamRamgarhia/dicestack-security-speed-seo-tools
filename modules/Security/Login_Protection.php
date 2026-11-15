@@ -105,7 +105,14 @@ final class Login_Protection extends Abstract_Module {
 				'label'   => __( 'Site is behind a proxy / CDN (Cloudflare, etc.)', 'dicestack' ),
 				'type'    => 'toggle',
 				'default' => false,
-				'help'    => __( 'Use the real visitor IP from proxy headers instead of the connecting IP. Only enable this if your site is actually behind a trusted proxy — otherwise the header can be spoofed.', 'dicestack' ),
+				'help'    => __( 'Use the real visitor IP from proxy headers instead of the connecting IP. This also needs the proxy addresses below — without them the headers are ignored, because anyone can send them.', 'dicestack' ),
+			),
+			array(
+				'key'     => 'trusted_proxies',
+				'label'   => __( 'Trusted proxy addresses', 'dicestack' ),
+				'type'    => 'textarea',
+				'default' => '',
+				'help'    => __( 'One IP or CIDR range per line, for example 173.245.48.0/20. Proxy headers are only believed when the request actually arrives from one of these. Cloudflare publishes its ranges at cloudflare.com/ips. Leave empty and the connecting IP is used instead — safe, but everyone behind the proxy shares one lockout.', 'dicestack' ),
 			),
 		);
 	}
@@ -187,26 +194,138 @@ final class Login_Protection extends Abstract_Module {
 	private function get_ip() {
 		$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 
-		// Only trust proxy headers when the admin has confirmed the site is behind
-		// a trusted proxy/CDN. Otherwise these headers are attacker-spoofable and
-		// would let anyone dodge or forge a lockout (or lock out the proxy IP,
-		// which blocks every visitor).
-		if ( ! empty( $this->get_setting( 'trust_proxy', false ) ) ) {
-			foreach ( array( 'HTTP_CF_CONNECTING_IP', 'HTTP_TRUE_CLIENT_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR' ) as $header ) {
-				if ( empty( $_SERVER[ $header ] ) ) {
+		$remote = filter_var( $remote, FILTER_VALIDATE_IP ) ? $remote : '0.0.0.0';
+
+		if ( empty( $this->get_setting( 'trust_proxy', false ) ) ) {
+			return $remote;
+		}
+
+		// The setting alone is not enough. A proxy header is just a request
+		// header: anyone can send one, including straight to the origin. Unless
+		// the request actually arrived from a proxy we were told to trust, the
+		// headers are ignored -- otherwise an attacker picks their own identity
+		// and either dodges a lockout or pins one on somebody else.
+		$trusted = $this->trusted_proxies();
+
+		if ( empty( $trusted ) || ! $this->ip_in_list( $remote, $trusted ) ) {
+			return $remote;
+		}
+
+		foreach ( array( 'HTTP_CF_CONNECTING_IP', 'HTTP_TRUE_CLIENT_IP', 'HTTP_X_REAL_IP' ) as $header ) {
+			if ( empty( $_SERVER[ $header ] ) ) {
+				continue;
+			}
+
+			$candidate = trim( sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) ) );
+
+			if ( filter_var( $candidate, FILTER_VALIDATE_IP ) ) {
+				return $candidate;
+			}
+		}
+
+		if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			$raw  = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) );
+			$hops = array_map( 'trim', explode( ',', $raw ) );
+
+			// Right to left, not left to right. X-Forwarded-For reads
+			// "client, proxy1, proxy2": each hop appends the address it heard
+			// from, so the entries nearest the end were written by
+			// infrastructure and the leftmost is whatever the client sent --
+			// which is to say, whatever an attacker typed. Walk back from the
+			// end and take the first hop that is not itself a trusted proxy.
+			foreach ( array_reverse( $hops ) as $hop ) {
+				if ( ! filter_var( $hop, FILTER_VALIDATE_IP ) ) {
 					continue;
 				}
-				$raw = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
-				// X-Forwarded-For can be a list: "client, proxy1, proxy2" — take the first valid IP.
-				foreach ( explode( ',', $raw ) as $candidate ) {
-					$candidate = trim( $candidate );
-					if ( filter_var( $candidate, FILTER_VALIDATE_IP ) ) {
-						return $candidate;
-					}
+
+				if ( ! $this->ip_in_list( $hop, $trusted ) ) {
+					return $hop;
 				}
 			}
 		}
 
-		return filter_var( $remote, FILTER_VALIDATE_IP ) ? $remote : '0.0.0.0';
+		return $remote;
+	}
+
+	/**
+	 * Proxy addresses the administrator has vouched for.
+	 *
+	 * @return string[] IPs or CIDR ranges.
+	 */
+	private function trusted_proxies() {
+		$raw = (string) $this->get_setting( 'trusted_proxies', '' );
+
+		if ( '' === trim( $raw ) ) {
+			return array();
+		}
+
+		$out = array();
+
+		foreach ( preg_split( '/[\r\n,]+/', $raw ) as $entry ) {
+			$entry = trim( $entry );
+
+			if ( '' !== $entry ) {
+				$out[] = $entry;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Is $ip inside any of $list (plain addresses or CIDR ranges)?
+	 *
+	 * @param string   $ip   Address to test.
+	 * @param string[] $list Addresses and CIDR ranges.
+	 * @return bool
+	 */
+	private function ip_in_list( $ip, $list ) {
+		foreach ( $list as $entry ) {
+			if ( false === strpos( $entry, '/' ) ) {
+				if ( $entry === $ip ) {
+					return true;
+				}
+				continue;
+			}
+
+			list( $subnet, $bits ) = array_pad( explode( '/', $entry, 2 ), 2, '' );
+
+			$packed_ip     = @inet_pton( $ip );     // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a malformed entry is simply not a match.
+			$packed_subnet = @inet_pton( $subnet ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- as above.
+			$bits          = (int) $bits;
+
+			// Mixing families never matches, and comparing them would read past
+			// the shorter of the two.
+			if ( false === $packed_ip || false === $packed_subnet
+				|| strlen( $packed_ip ) !== strlen( $packed_subnet ) ) {
+				continue;
+			}
+
+			$max = strlen( $packed_ip ) * 8;
+
+			if ( $bits < 0 || $bits > $max ) {
+				continue;
+			}
+
+			$whole_bytes = intdiv( $bits, 8 );
+			$spare_bits  = $bits % 8;
+
+			if ( $whole_bytes > 0
+				&& 0 !== substr_compare( $packed_ip, substr( $packed_subnet, 0, $whole_bytes ), 0, $whole_bytes ) ) {
+				continue;
+			}
+
+			if ( 0 === $spare_bits ) {
+				return true;
+			}
+
+			$mask = ~( ( 1 << ( 8 - $spare_bits ) ) - 1 ) & 0xFF;
+
+			if ( ( ord( $packed_ip[ $whole_bytes ] ) & $mask ) === ( ord( $packed_subnet[ $whole_bytes ] ) & $mask ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

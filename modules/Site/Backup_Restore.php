@@ -139,10 +139,62 @@ final class Backup_Restore extends Abstract_Module {
 			wp_mkdir_p( $dir );
 			// phpcs:disable WordPress.WP.AlternativeFunctions
 			@file_put_contents( $dir . 'index.html', '' );
-			@file_put_contents( $dir . '.htaccess', "Deny from all\n" );
+			@file_put_contents( $dir . 'index.php', "<?php\n// Silence is golden.\n" );
+			// Both syntaxes on purpose. "Deny from all" alone is Apache 2.2; on
+			// 2.4 without mod_access_compat it is not a deny but a 500, which
+			// fails open on exactly the hosts that needed protecting. Nginx
+			// reads neither, which is why nothing here is relied on alone -- see
+			// restore_dir().
+			@file_put_contents(
+				$dir . '.htaccess',
+				"<IfModule mod_authz_core.c>\n\tRequire all denied\n</IfModule>\n"
+				. "<IfModule !mod_authz_core.c>\n\tOrder allow,deny\n\tDeny from all\n</IfModule>\n"
+				. "Options -Indexes\n"
+			);
 			// phpcs:enable WordPress.WP.AlternativeFunctions
 		}
 		return $dir;
+	}
+
+	/**
+	 * Unguessable directory to unpack an archive into.
+	 *
+	 * The old name was the fixed string "restore-tmp", so during every restore
+	 * the site's entire database dump sat at a URL anyone could predict:
+	 * /wp-content/uploads/dicestack-backups/restore-tmp/database.sql
+	 *
+	 * The only thing in the way was the folder's .htaccess, and Nginx does not
+	 * read .htaccess at all. On those hosts a restore published wp_users --
+	 * password hashes and addresses -- to the open internet for as long as the
+	 * restore took, and longer if it crashed before cleanup.
+	 *
+	 * wp_hash() is keyed on this site's own salts, so the name cannot be
+	 * derived from the archive name or anything else a visitor can see.
+	 *
+	 * @param string $name Archive file name.
+	 * @return string Absolute path, with a trailing slash.
+	 */
+	private function restore_dir( $name ) {
+		return $this->dir() . 'restore-' . substr( wp_hash( 'dicestack_restore|' . $name, 'nonce' ), 0, 20 ) . '/';
+	}
+
+	/**
+	 * Remove extraction directories left behind by an interrupted restore.
+	 *
+	 * Cleanup after a restore runs only if the restore reaches the end of the
+	 * function. Importing a database routinely outlives max_execution_time, and
+	 * a fatal or timeout used to leave the unpacked archive -- database
+	 * included -- on disk indefinitely, because cleanup_old() only ever looked
+	 * at *.zip.
+	 *
+	 * @param int $older_than Seconds; 0 removes every one.
+	 */
+	private function sweep_restore_dirs( $older_than = HOUR_IN_SECONDS ) {
+		foreach ( (array) glob( $this->dir() . 'restore-*', GLOB_ONLYDIR ) as $stale ) {
+			if ( 0 === $older_than || filemtime( $stale ) < ( time() - $older_than ) ) {
+				$this->delete_tree( trailingslashit( $stale ) );
+			}
+		}
 	}
 
 	/**
@@ -268,6 +320,11 @@ final class Backup_Restore extends Abstract_Module {
 
 		$zip = new \ZipArchive();
 		if ( true !== $zip->open( $zip_file, \ZipArchive::CREATE ) ) {
+			// Without this the dump stays in the uploads folder for good: a
+			// complete, unencrypted copy of the database that nothing ever
+			// deletes, because cleanup_old() only looks at *.zip.
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink, WordPress.PHP.NoSilencedErrors.Discouraged
+			@unlink( $sql_file );
 			return new \WP_Error( 'zip_fail', __( 'Could not create the zip archive.', 'dicestack' ) );
 		}
 		$zip->addFile( $sql_file, 'database.sql' );
@@ -345,6 +402,8 @@ final class Backup_Restore extends Abstract_Module {
 	 * @return void
 	 */
 	private function cleanup_old() {
+		$this->sweep_restore_dirs();
+
 		$days = (int) $this->get_setting( 'retention_days', 7 );
 		$cut  = time() - ( $days * DAY_IN_SECONDS );
 		foreach ( (array) glob( $this->dir() . 'dicestack-backup-*.zip' ) as $file ) {
@@ -472,7 +531,22 @@ final class Backup_Restore extends Abstract_Module {
 		}
 		@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- backups can take a while.
 
-		$tmp = $this->dir() . 'restore-tmp/';
+		// Anything an earlier interrupted restore left behind goes now, rather
+		// than waiting for a scheduled sweep that may never come.
+		$this->sweep_restore_dirs();
+
+		$tmp = $this->restore_dir( $name );
+
+		// Registered before anything is written, so a timeout or fatal part way
+		// through the import cannot leave an unpacked database on disk.
+		register_shutdown_function(
+			function () use ( $tmp ) {
+				if ( is_dir( $tmp ) ) {
+					$this->delete_tree( $tmp );
+				}
+			}
+		);
+
 		$zip = new \ZipArchive();
 		if ( true !== $zip->open( $path ) ) {
 			wp_safe_redirect( admin_url( 'admin.php?page=dicestack-backups&dicestack_b=error' ) );

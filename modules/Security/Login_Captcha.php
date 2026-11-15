@@ -72,8 +72,31 @@ final class Login_Captcha extends Abstract_Module {
 	 * @param int $answer Numeric answer.
 	 * @return string
 	 */
-	private function hash( $answer ) {
-		return wp_hash( 'dicestack_login_math_' . $answer );
+	private function hash( $answer, $expires ) {
+		return wp_hash( 'dicestack_login_math|' . $answer . '|' . $expires );
+	}
+
+	/**
+	 * How long a rendered challenge stays valid.
+	 *
+	 * The old token was wp_hash() of the answer alone. The answer is a sum of
+	 * two digits between 1 and 9, so there were seventeen possible tokens, they
+	 * never changed for the life of the site, and they never expired. Fetching
+	 * the login page once gave a bot a question-and-token pair it could replay
+	 * forever -- which is to say the challenge cost an attacker one request,
+	 * once.
+	 */
+	const CHALLENGE_TTL = 1800;
+
+	/**
+	 * Build the signed token that travels with the form.
+	 *
+	 * @param int $answer  Expected answer.
+	 * @param int $expires Unix time the challenge stops being valid.
+	 * @return string
+	 */
+	private function token( $answer, $expires ) {
+		return $expires . '.' . $this->hash( $answer, $expires );
 	}
 
 	/**
@@ -94,7 +117,8 @@ final class Login_Captcha extends Abstract_Module {
 		$b   = wp_rand( 1, 9 );
 		echo '<p><label for="dicestack_login_math">' . sprintf( /* translators: 1: first number, 2: second number. */ esc_html__( 'What is %1$d + %2$d?', 'dicestack' ), (int) $a, (int) $b ) . '<br/>';
 		echo '<input type="text" name="dicestack_login_math" id="dicestack_login_math" class="input" size="20" autocomplete="off" /></label>';
-		echo '<input type="hidden" name="dicestack_login_math_h" value="' . esc_attr( $this->hash( $a + $b ) ) . '" /></p>';
+		$expires = time() + self::CHALLENGE_TTL;
+		echo '<input type="hidden" name="dicestack_login_math_h" value="' . esc_attr( $this->token( $a + $b, $expires ) ) . '" /></p>';
 	}
 
 	/**
@@ -109,18 +133,77 @@ final class Login_Captcha extends Abstract_Module {
 			return $user;
 		}
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- core login flow; reading our captcha fields only.
-		// Fail open when our field wasn't rendered (custom login form, caching),
-		// so legitimate logins are never blocked by a missing captcha.
-		if ( empty( $_POST['log'] ) || empty( $_POST['dicestack_login_math_h'] ) ) {
+		if ( empty( $_POST['log'] ) ) {
 			return $user;
 		}
+
+		$supplied = isset( $_POST['dicestack_login_math_h'] )
+			? sanitize_text_field( wp_unslash( $_POST['dicestack_login_math_h'] ) )
+			: '';
+
+		if ( '' === $supplied ) {
+			// Missing token. This used to return $user unconditionally, which
+			// meant a bot that simply did not send the field skipped the
+			// challenge altogether -- and a bot posting straight to
+			// wp-login.php is exactly what this module exists to stop.
+			//
+			// Still open where the field genuinely was not rendered: XML-RPC,
+			// the REST API, application passwords and any plugin calling
+			// wp_signon() do not go through a wp-login.php POST and never see
+			// login_form. Closed where it was.
+			if ( $this->is_login_form_post() ) {
+				return new \WP_Error(
+					'dicestack_login_captcha',
+					__( '<strong>Error:</strong> Please answer the math question on the login form.', 'dicestack' )
+				);
+			}
+
+			return $user;
+		}
+
 		$answer = isset( $_POST['dicestack_login_math'] ) ? absint( wp_unslash( $_POST['dicestack_login_math'] ) ) : -1;
-		$hash   = sanitize_text_field( wp_unslash( $_POST['dicestack_login_math_h'] ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
-		if ( ! hash_equals( $hash, $this->hash( $answer ) ) ) {
+		list( $expires, $hash ) = array_pad( explode( '.', $supplied, 2 ), 2, '' );
+		$expires                = (int) $expires;
+
+		if ( $expires < time() ) {
+			return new \WP_Error(
+				'dicestack_login_captcha',
+				__( '<strong>Error:</strong> That login form had been open too long. Please try again.', 'dicestack' )
+			);
+		}
+
+		if ( ! hash_equals( $hash, $this->hash( $answer, $expires ) ) ) {
 			return new \WP_Error( 'dicestack_login_captcha', __( '<strong>Error:</strong> Incorrect answer to the math question.', 'dicestack' ) );
 		}
 		return $user;
+	}
+
+	/**
+	 * Is this a POST to wp-login.php, where login_form ran and our field was
+	 * therefore on the page?
+	 *
+	 * @return bool
+	 */
+	private function is_login_form_post() {
+		if ( ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST )
+			|| ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			return false;
+		}
+
+		$method = isset( $_SERVER['REQUEST_METHOD'] )
+			? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) )
+			: '';
+
+		if ( 'POST' !== $method ) {
+			return false;
+		}
+
+		$script = isset( $_SERVER['SCRIPT_NAME'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['SCRIPT_NAME'] ) )
+			: '';
+
+		return false !== strpos( $script, 'wp-login.php' );
 	}
 }

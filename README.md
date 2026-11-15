@@ -11,7 +11,7 @@
 
 **Built by [Dice Codes](https://dicecodes.com) — your digital dream team.**
 
-🔗 **[Download on WordPress.org](https://wordpress.org/plugins/dicestack/)** &nbsp;•&nbsp; 🌐 **[Plugin Home](https://dicecodes.com/dicestack-wordpress-plugin/)** &nbsp;•&nbsp; 📖 **[Documentation](https://dicecodes.com/dicestack/docs/)**
+🔗 **[Download on WordPress.org](https://wordpress.org/plugins/dicestack/)** &nbsp;•&nbsp; 🌐 **[Plugin Home](https://dicecodes.com/dicestack/)** &nbsp;•&nbsp; 📖 **[Documentation](https://dicecodes.com/dicestack/docs/)**
 
 <p align="center">
   <img src=".wordpress-org/github-social.png" alt="DiceStack — the free all-in-one WordPress plugin with 200+ modular tools for security, performance, SEO, WooCommerce, caching and backups" width="100%">

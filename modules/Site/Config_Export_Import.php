@@ -132,6 +132,47 @@ final class Config_Export_Import extends Abstract_Module {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Settings fields that hold a credential and must never leave the site.
+	 *
+	 * A configuration export is something people email to a colleague, commit
+	 * to a repository, or attach to a support thread. It used to carry the
+	 * Cloudflare API token, the SMTP password, the FTP and WebDAV passwords,
+	 * the Google Drive OAuth token and the maintenance-mode bypass key, all in
+	 * plain text, with nothing on screen to say so.
+	 *
+	 * Removed rather than masked: a placeholder that imports as if it were a
+	 * real value is worse than an absent one.
+	 *
+	 * @var string[]
+	 */
+	private static $secret_fields = array(
+		'api_token',    // Cloudflare.
+		'bypass_key',   // Maintenance mode.
+		'ftp_pass',     // Cloud Backup (FTP).
+		'webdav_pass',  // Cloud Backup (WebDAV).
+		'gdrive_token', // Cloud Backup (Google Drive OAuth).
+		'password',     // SMTP Mailer.
+	);
+
+	/**
+	 * Strip credentials out of one module's settings.
+	 *
+	 * @param mixed $settings Decoded settings value.
+	 * @return mixed
+	 */
+	private function redact_secrets( $settings ) {
+		if ( ! is_array( $settings ) ) {
+			return $settings;
+		}
+
+		foreach ( self::$secret_fields as $field ) {
+			unset( $settings[ $field ] );
+		}
+
+		return $settings;
+	}
+
 	public function handle_export() {
 		if ( ! current_user_can( 'manage_options' ) || ! check_admin_referer( 'dicestack_export_config' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'dicestack' ) );
@@ -148,8 +189,10 @@ final class Config_Export_Import extends Abstract_Module {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE 'dicestack\\_settings\\_%'" );
 		foreach ( $rows as $row ) {
-			$data['settings'][ $row->option_name ] = maybe_unserialize( $row->option_value );
+			$data['settings'][ $row->option_name ] = $this->redact_secrets( maybe_unserialize( $row->option_value ) );
 		}
+
+		$data['note'] = __( 'Credentials (passwords, API tokens and keys) are deliberately left out of this file. Re-enter them on the site you import into.', 'dicestack' );
 
 		nocache_headers();
 		header( 'Content-Type: application/json; charset=utf-8' );

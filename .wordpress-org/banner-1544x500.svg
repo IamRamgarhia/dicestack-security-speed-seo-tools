@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1544 500" width="1544" height="500" role="img" aria-label="OmniWP banner">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1544 500" width="1544" height="500" role="img" aria-label="DiceStack banner">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#16386b"/>
@@ -19,7 +19,7 @@
     </g>
     <path d="M68 92 l18 60 l18 -42 l18 42 l18 -60" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <text x="380" y="240" font-family="Segoe UI,Arial,sans-serif" font-size="124" font-weight="800" fill="#ffffff" letter-spacing="-2">OmniWP</text>
+  <text x="380" y="240" font-family="Segoe UI,Arial,sans-serif" font-size="124" font-weight="800" fill="#ffffff" letter-spacing="-2">DiceStack</text>
   <text x="384" y="312" font-family="Segoe UI,Arial,sans-serif" font-size="44" font-weight="600" fill="#9fe8f5">One free plugin · 180+ tools · zero bloat</text>
   <text x="384" y="372" font-family="Segoe UI,Arial,sans-serif" font-size="30" fill="#9fb2cf">Caching · Security · SEO · WooCommerce · Backups · Redis object cache · by Dice Codes</text>
 </svg>
